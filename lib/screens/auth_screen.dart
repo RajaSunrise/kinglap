@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/data_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -11,10 +13,15 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLogin = true;
   bool _isPasswordVisible = false;
 
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _nameController = TextEditingController(); // Only for register (optional in UI for now, but needed for proper user creation)
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final dataService = Provider.of<DataService>(context);
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -108,8 +115,34 @@ class _AuthScreenState extends State<AuthScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                   if (!_isLogin) ...[
+                    Text(
+                      'Nama Lengkap',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.grey[200] : const Color(0xFF0d141b),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        hintText: 'Masukkan nama lengkap',
+                        filled: true,
+                        fillColor: isDark ? Colors.grey[800] : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: isDark ? Colors.grey[600]! : Colors.grey[300]!),
+                        ),
+                        contentPadding: const EdgeInsets.all(15),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   Text(
-                    'Email atau Nomor Telepon',
+                    'Email',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -118,8 +151,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 8),
                   TextField(
+                    controller: _emailController,
                     decoration: InputDecoration(
-                      hintText: 'Masukkan email atau nomor telepon',
+                      hintText: 'Masukkan email',
                       filled: true,
                       fillColor: isDark ? Colors.grey[800] : Colors.white,
                       border: OutlineInputBorder(
@@ -144,6 +178,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 8),
                   TextField(
+                    controller: _passwordController,
                     obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
                       hintText: 'Masukkan kata sandi',
@@ -195,8 +230,38 @@ class _AuthScreenState extends State<AuthScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/home');
+                  onPressed: () async {
+                    if (_isLogin) {
+                      bool success = await dataService.login(
+                        _emailController.text,
+                        _passwordController.text
+                      );
+                      if (success) {
+                        if (dataService.currentUser?.role == 'admin') {
+                          Navigator.pushReplacementNamed(context, '/admin_home');
+                        } else {
+                          Navigator.pushReplacementNamed(context, '/home');
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Login gagal. Periksa email dan password.')),
+                        );
+                      }
+                    } else {
+                      // Register
+                      bool success = await dataService.register(
+                        _nameController.text.isNotEmpty ? _nameController.text : 'User Baru',
+                        _emailController.text,
+                        _passwordController.text
+                      );
+                      if (success) {
+                         Navigator.pushReplacementNamed(context, '/home');
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Registrasi gagal. Email mungkin sudah terdaftar.')),
+                        );
+                      }
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
@@ -217,6 +282,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
 
               const SizedBox(height: 32),
+              // Social buttons (Visual only for now)
               Row(
                 children: [
                   Expanded(child: Divider(color: isDark ? Colors.grey[600] : Colors.grey[300])),
