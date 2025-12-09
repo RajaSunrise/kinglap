@@ -5,6 +5,7 @@ import '../models/court.dart';
 import '../models/booking.dart';
 import '../models/user.dart';
 
+// Service to handle data and local storage
 class DataService extends ChangeNotifier {
   List<Court> _courts = [];
   List<Booking> _bookings = [];
@@ -19,7 +20,7 @@ class DataService extends ChangeNotifier {
   }
 
   Future<void> _initializeData() async {
-    // Initialize mock courts
+    // Initialize mock courts based on the HTML provided
     _courts = [
       Court(
         id: '1',

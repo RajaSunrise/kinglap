@@ -3,53 +3,69 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../services/data_service.dart';
 import '../models/booking.dart';
+import '../models/court.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _showUpcoming = true;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final dataService = Provider.of<DataService>(context);
-    final currentUser = dataService.currentUser;
-    final bookings = currentUser != null
-        ? dataService.getBookingsForUser(currentUser.id)
-        : <Booking>[];
+    final user = dataService.currentUser;
+    final bookings = dataService.bookings; // In a real app, filter by user ID
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profil Saya', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
+        title: Text(
+          'Profil Saya',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             // Profile Header
             Container(
-              padding: const EdgeInsets.all(24),
-              width: double.infinity,
-              color: theme.scaffoldBackgroundColor,
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
                   CircleAvatar(
-                    radius: 60,
-                    backgroundImage: currentUser != null
-                        ? NetworkImage(currentUser.profilePictureUrl)
-                        : null,
+                    radius: 64,
+                    backgroundImage: NetworkImage(user?.profilePictureUrl ?? ''),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    currentUser?.name ?? 'Guest',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    user?.name ?? 'User',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : const Color(0xFF0d141b),
+                    ),
                   ),
+                  const SizedBox(height: 4),
                   Text(
-                    currentUser?.email ?? '',
-                    style: TextStyle(color: Colors.grey[500]),
+                    user?.email ?? '',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDark ? Colors.grey[400] : Colors.grey[500],
+                    ),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -58,6 +74,10 @@ class ProfileScreen extends StatelessWidget {
                       backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
                       foregroundColor: theme.colorScheme.primary,
                       elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      minimumSize: const Size(double.infinity, 40),
                     ),
                     child: const Text('Edit Profil'),
                   ),
@@ -65,181 +85,285 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
 
-            Divider(thickness: 4, color: isDark ? Colors.black26 : Colors.grey[100]),
+            Divider(thickness: 8, color: isDark ? Colors.grey[900] : Colors.grey[100]),
 
             // Booking History
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Riwayat Pemesanan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Riwayat Pemesanan',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : const Color(0xFF0d141b),
+                  ),
+                ),
+              ),
+            ),
 
-                  // Toggle Buttons (Visual only for now)
-                  Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.grey[800] : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.all(4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text('Akan Datang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            // Segmented Buttons
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.grey[800] : Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _showUpcoming = true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _showUpcoming
+                              ? theme.colorScheme.primary
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: _showUpcoming
+                              ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 2)]
+                              : null,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Akan Datang',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: _showUpcoming
+                                ? Colors.white
+                                : (isDark ? Colors.grey[400] : Colors.grey[600]),
                           ),
                         ),
-                        Expanded(
-                          child: Container(
-                            alignment: Alignment.center,
-                            child: Text('Selesai', style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600])),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  if (bookings.isEmpty)
-                    Center(
-                      child: Column(
-                        children: [
-                          Icon(Icons.sports_soccer, size: 100, color: Colors.grey[300]),
-                          const SizedBox(height: 16),
-                          const Text('Belum Ada Pemesanan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 8),
-                          Text('Anda belum memiliki riwayat pemesanan.', style: TextStyle(color: Colors.grey[500])),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.popUntil(context, (route) => route.isFirst);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text('Booking Lapangan Sekarang'),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _showUpcoming = false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: !_showUpcoming
+                              ? theme.colorScheme.primary
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: !_showUpcoming
+                              ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 2)]
+                              : null,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Selesai',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: !_showUpcoming
+                                ? Colors.white
+                                : (isDark ? Colors.grey[400] : Colors.grey[600]),
                           ),
-                        ],
+                        ),
                       ),
-                    )
-                  else
-                    ...bookings.map((booking) {
-                       final court = dataService.getCourtById(booking.courtId);
-                       return Card(
-                         margin: const EdgeInsets.only(bottom: 16),
-                         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                         elevation: 2,
-                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                         child: Padding(
-                           padding: const EdgeInsets.all(16),
-                           child: Column(
-                             crossAxisAlignment: CrossAxisAlignment.start,
-                             children: [
-                               Row(
-                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                 children: [
-                                   Text(court?.name ?? 'Unknown Court', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                   Text('Rp ${booking.totalPrice}', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-                                 ],
-                               ),
-                               const SizedBox(height: 8),
-                               Row(
-                                 children: [
-                                   const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                                   const SizedBox(width: 8),
-                                   Text(DateFormat('d MMM yyyy').format(booking.date)),
-                                   const SizedBox(width: 16),
-                                   const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                                   const SizedBox(width: 8),
-                                   Text('${booking.startTime} (${booking.duration} Jam)'),
-                                 ],
-                               ),
-                               const SizedBox(height: 12),
-                               Row(
-                                 mainAxisAlignment: MainAxisAlignment.end,
-                                 children: [
-                                   OutlinedButton(
-                                     onPressed: () {
-                                       dataService.deleteBooking(booking.id);
-                                     },
-                                     style: OutlinedButton.styleFrom(
-                                       foregroundColor: Colors.red,
-                                       side: const BorderSide(color: Colors.red),
-                                     ),
-                                     child: const Text('Batalkan'),
-                                   )
-                                 ],
-                               )
-                             ],
-                           ),
-                         ),
-                       );
-                    }),
+                    ),
+                  ),
                 ],
               ),
             ),
 
-             Divider(thickness: 4, color: isDark ? Colors.black26 : Colors.grey[100]),
+            // List of Bookings or Empty State
+            if (bookings.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  children: [
+                    Icon(Icons.sports_soccer, size: 100, color: isDark ? Colors.grey[700] : Colors.grey[300]),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Belum Ada Pemesanan',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Anda belum memiliki riwayat pemesanan. Mulai cari dan booking lapangan futsal sekarang!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: isDark ? Colors.grey[400] : Colors.grey[500],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text('Booking Lapangan Sekarang'),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: bookings.length,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemBuilder: (context, index) {
+                  final booking = bookings[index];
+                  final court = dataService.getCourtById(booking.courtId);
+                  // Simple filter logic for prototype
+                  // In real app compare dates properly
 
-             // Settings Section
-             Padding(
-               padding: const EdgeInsets.all(16),
-               child: Column(
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                   const Text('Pengaturan & Bantuan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                   const SizedBox(height: 16),
-                   _buildSettingItem(context, Icons.settings, 'Pengaturan Aplikasi'),
-                   _buildSettingItem(context, Icons.help_outline, 'Pusat Bantuan'),
-                   _buildSettingItem(context, Icons.info_outline, 'Tentang Kinglap'),
-                   const SizedBox(height: 24),
-                   SizedBox(
-                     width: double.infinity,
-                     height: 50,
-                     child: TextButton.icon(
-                       onPressed: () {
-                         Navigator.pushReplacementNamed(context, '/');
-                       },
-                       icon: const Icon(Icons.logout),
-                       label: const Text('Keluar'),
-                       style: TextButton.styleFrom(
-                         backgroundColor: Colors.red.withOpacity(0.1),
-                         foregroundColor: Colors.red,
-                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                       ),
-                     ),
-                   )
-                 ],
-               ),
-             )
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    color: isDark ? Colors.grey[800] : Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  court?.imageUrl ?? '',
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_,__,___) => Container(width: 60, height: 60, color: Colors.grey),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      court?.name ?? 'Unknown Court',
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    Text(
+                                      '${DateFormat('d MMM y').format(booking.date)} • ${booking.startTime}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                      ),
+                                    ),
+                                    Text(
+                                      'Rp ${booking.totalPrice}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                onPressed: () {
+                                  // CRUD: Delete
+                                  dataService.deleteBooking(booking.id);
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+            Divider(thickness: 8, color: isDark ? Colors.grey[900] : Colors.grey[100]),
+
+            // Settings Section
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Pengaturan & Bantuan',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : const Color(0xFF0d141b),
+                  ),
+                ),
+              ),
+            ),
+
+            _buildSettingsItem(Icons.settings, 'Pengaturan Aplikasi', theme, isDark),
+            _buildSettingsItem(Icons.help_outline, 'Pusat Bantuan', theme, isDark),
+            _buildSettingsItem(Icons.info_outline, 'Tentang Kinglap', theme, isDark),
+
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                },
+                icon: const Icon(Icons.logout),
+                label: const Text('Keluar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark ? Colors.red.withOpacity(0.2) : Colors.red[50],
+                  foregroundColor: Colors.red,
+                  minimumSize: const Size(double.infinity, 48),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSettingItem(BuildContext context, IconData icon, String title) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: Theme.of(context).colorScheme.primary),
-      ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+  Widget _buildSettingsItem(IconData icon, String title, ThemeData theme, bool isDark) {
+    return InkWell(
       onTap: () {},
-      contentPadding: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: theme.colorScheme.primary),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right, color: isDark ? Colors.grey[600] : Colors.grey[400]),
+          ],
+        ),
+      ),
     );
   }
 }

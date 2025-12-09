@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'services/data_service.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/auth_screen.dart';
@@ -9,8 +10,9 @@ import 'screens/court_detail_screen.dart';
 import 'screens/booking_screen.dart';
 import 'screens/profile_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id', null);
   runApp(const MyApp());
 }
 

@@ -1,3 +1,4 @@
+// Model for User
 class User {
   final String id;
   final String name;

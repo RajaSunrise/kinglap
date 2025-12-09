@@ -1,3 +1,4 @@
+// Model for Court
 class Court {
   final String id;
   final String name;
