@@ -1,3 +1,4 @@
+// Model for Booking
 class Booking {
   final String id;
   final String courtId;

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/data_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -8,62 +10,68 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  bool isLogin = true;
+  bool _isLogin = true;
+  bool _isPasswordVisible = false;
+
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _nameController = TextEditingController(); // Only for register (optional in UI for now, but needed for proper user creation)
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final dataService = Provider.of<DataService>(context);
 
     return Scaffold(
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 64.0),
+        child: Container(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height,
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 'Kinglap',
-                style: theme.textTheme.headlineLarge?.copyWith(
+                style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : const Color(0xFF0d141b),
                 ),
               ),
               const SizedBox(height: 32),
-              // Toggle Switch
+
+              // Auth Toggle
               Container(
                 height: 48,
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF101922) : Colors.grey[200],
                   borderRadius: BorderRadius.circular(12),
                 ),
-                padding: const EdgeInsets.all(4),
                 child: Row(
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => setState(() => isLogin = true),
+                        onTap: () => setState(() => _isLogin = true),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isLogin
+                            color: _isLogin
                                 ? (isDark ? Colors.grey[700] : Colors.white)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
-                            boxShadow: isLogin
-                                ? [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 2,
-                                    )
-                                  ]
-                                : [],
+                            boxShadow: _isLogin && !isDark
+                                ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 2)]
+                                : null,
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             'Masuk',
                             style: TextStyle(
+                              fontSize: 16,
                               fontWeight: FontWeight.w500,
-                              color: isLogin
+                              color: _isLogin
                                   ? theme.colorScheme.primary
                                   : (isDark ? Colors.grey[400] : Colors.grey[500]),
                             ),
@@ -73,28 +81,24 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => setState(() => isLogin = false),
+                        onTap: () => setState(() => _isLogin = false),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: !isLogin
+                            color: !_isLogin
                                 ? (isDark ? Colors.grey[700] : Colors.white)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
-                            boxShadow: !isLogin
-                                ? [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 2,
-                                    )
-                                  ]
-                                : [],
+                            boxShadow: !_isLogin && !isDark
+                                ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 2)]
+                                : null,
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             'Daftar',
                             style: TextStyle(
+                              fontSize: 16,
                               fontWeight: FontWeight.w500,
-                              color: !isLogin
+                              color: !_isLogin
                                   ? theme.colorScheme.primary
                                   : (isDark ? Colors.grey[400] : Colors.grey[500]),
                             ),
@@ -106,91 +110,158 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ),
               const SizedBox(height: 24),
+
               // Form
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                   if (!_isLogin) ...[
+                    Text(
+                      'Nama Lengkap',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.grey[200] : const Color(0xFF0d141b),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        hintText: 'Masukkan nama lengkap',
+                        filled: true,
+                        fillColor: isDark ? Colors.grey[800] : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: isDark ? Colors.grey[600]! : Colors.grey[300]!),
+                        ),
+                        contentPadding: const EdgeInsets.all(15),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   Text(
-                    'Email atau Nomor Telepon',
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                    'Email',
+                    style: TextStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: isDark ? Colors.grey[200] : const Color(0xFF0d141b),
                     ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
+                    controller: _emailController,
                     decoration: InputDecoration(
-                      hintText: 'Masukkan email atau nomor telepon',
+                      hintText: 'Masukkan email',
                       filled: true,
-                      fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      fillColor: isDark ? Colors.grey[800] : Colors.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
-                        ),
+                        borderSide: BorderSide(color: isDark ? Colors.grey[600]! : Colors.grey[300]!),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
-                        ),
+                        borderSide: BorderSide(color: isDark ? Colors.grey[600]! : Colors.grey[300]!),
                       ),
-                      contentPadding: const EdgeInsets.all(16),
+                      contentPadding: const EdgeInsets.all(15),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Kata Sandi',
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                    style: TextStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: isDark ? Colors.grey[200] : const Color(0xFF0d141b),
                     ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
-                    obscureText: true,
+                    controller: _passwordController,
+                    obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
                       hintText: 'Masukkan kata sandi',
                       filled: true,
-                      fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                       border: OutlineInputBorder(
+                      fillColor: isDark ? Colors.grey[800] : Colors.white,
+                      border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
-                        ),
+                        borderSide: BorderSide(color: isDark ? Colors.grey[600]! : Colors.grey[300]!),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
-                        ),
+                        borderSide: BorderSide(color: isDark ? Colors.grey[600]! : Colors.grey[300]!),
                       ),
-                      contentPadding: const EdgeInsets.all(16),
-                      suffixIcon: const Icon(Icons.visibility),
+                      contentPadding: const EdgeInsets.all(15),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                          color: isDark ? Colors.grey[500] : Colors.grey[400],
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  'Lupa Kata Sandi?',
-                  style: TextStyle(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w500,
-                    decoration: TextDecoration.underline,
+
+              if (_isLogin) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    'Lupa Kata Sandi?',
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      decoration: TextDecoration.underline,
+                    ),
                   ),
                 ),
-              ),
+              ],
+
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Navigate to Home
-                    Navigator.pushReplacementNamed(context, '/home');
+                  onPressed: () async {
+                    if (_isLogin) {
+                      bool success = await dataService.login(
+                        _emailController.text,
+                        _passwordController.text
+                      );
+                      if (success) {
+                        if (dataService.currentUser?.role == 'admin') {
+                          Navigator.pushReplacementNamed(context, '/admin_home');
+                        } else {
+                          Navigator.pushReplacementNamed(context, '/home');
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Login gagal. Periksa email dan password.')),
+                        );
+                      }
+                    } else {
+                      // Register
+                      bool success = await dataService.register(
+                        _nameController.text.isNotEmpty ? _nameController.text : 'User Baru',
+                        _emailController.text,
+                        _passwordController.text
+                      );
+                      if (success) {
+                         Navigator.pushReplacementNamed(context, '/home');
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Registrasi gagal. Email mungkin sudah terdaftar.')),
+                        );
+                      }
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
@@ -201,7 +272,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     elevation: 2,
                   ),
                   child: Text(
-                    isLogin ? 'Masuk' : 'Daftar',
+                    _isLogin ? 'Masuk' : 'Daftar',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -209,11 +280,12 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 32),
-              // Divider
+              // Social buttons (Visual only for now)
               Row(
                 children: [
-                  Expanded(child: Divider(color: Colors.grey[300])),
+                  Expanded(child: Divider(color: isDark ? Colors.grey[600] : Colors.grey[300])),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
@@ -225,25 +297,26 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                     ),
                   ),
-                  Expanded(child: Divider(color: Colors.grey[300])),
+                  Expanded(child: Divider(color: isDark ? Colors.grey[600] : Colors.grey[300])),
                 ],
               ),
               const SizedBox(height: 24),
-              // Social Login
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                   _SocialButton(
-                    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDeQnnxV7TsJp32d9t9gYuBc6za9SDQ5WMMT7RALF0Ckn7ALTavS5tQl9m0LD1Bmcu269qDpn3MC44rTnuuF-ASXdmk92J2fqKXW2kr-m8_ETMOz2viBZe6mb_WMMJbU0YzKvJLqhmw9topsidPWIQB8FRwQOfwxd836NYnftotyugRFq9d2JQhzPzVjdXN3p0VoSUHI_NzXbSl2qP04BQH5wJAH8d41gGOpGPazDJ5vWcyM_hcjEeAiF5hMPvXg2i_7xDCbLWVwg',
+                  _socialButton(
+                    'https://lh3.googleusercontent.com/aida-public/AB6AXuDeQnnxV7TsJp32d9t9gYuBc6za9SDQ5WMMT7RALF0Ckn7ALTavS5tQl9m0LD1Bmcu269qDpn3MC44rTnuuF-ASXdmk92J2fqKXW2kr-m8_ETMOz2viBZe6mb_WMMJbU0YzKvJLqhmw9topsidPWIQB8FRwQOfwxd836NYnftotyugRFq9d2JQhzPzVjdXN3p0VoSUHI_NzXbSl2qP04BQH5wJAH8d41gGOpGPazDJ5vWcyM_hcjEeAiF5hMPvXg2i_7xDCbLWVwg',
+                    isDark
                   ),
                   const SizedBox(width: 16),
-                  _SocialButton(
-                    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCQq42urgWSbsc27MU8gdF-uAk1VjDYiY4orkEvhfcTsjD6QMjbphRiMyEYHbDTmOaQH3FbKNFHmFSM1uxtStySsgvd-XPba0mT4hn0WvPVSUciW7Jl739FOFXHTxotylasBBPv6QvuxjQntN1ocMdOOgnZhjnwK2TWZfDFva0ZD-WyRn5vnDC6dBBIbnf0wrYUYm1h49_g5yM0I_z1UPWeWRcZ5DMqGLJ-DistKHTh35VkwMQ0FTOJiI9cmy9m8w9w0yCnBDBX9w',
+                  _socialButton(
+                    'https://lh3.googleusercontent.com/aida-public/AB6AXuCQq42urgWSbsc27MU8gdF-uAk1VjDYiY4orkEvhfcTsjD6QMjbphRiMyEYHbDTmOaQH3FbKNFHmFSM1uxtStySsgvd-XPba0mT4hn0WvPVSUciW7Jl739FOFXHTxotylasBBPv6QvuxjQntN1ocMdOOgnZhjnwK2TWZfDFva0ZD-WyRn5vnDC6dBBIbnf0wrYUYm1h49_g5yM0I_z1UPWeWRcZ5DMqGLJ-DistKHTh35VkwMQ0FTOJiI9cmy9m8w9w0yCnBDBX9w',
+                    isDark
                   ),
                   const SizedBox(width: 16),
-                  _SocialButton(
-                    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBo6u8XulMTMJes2HUa6dDwjAFhosqeYMGYK21pxLnEzNMr8qNxftfF-052R9IWPVLzCq8LH9MLZGCIY-uM0d2aZQHpwm3CFyRKhYiORvRfRdwITf2vVlG7C92ON9YiOwZGTLHIvszC3g9uJtGzE3gbBmPs8pgkO6dFzh8X45OYT5v-sAbteonQxzfSFtGxqpYKo8X4Q3F_CF-5J33qaTPnUU4WDMaWJkTO4v1Ji13RgVtmHtUPOzrCxYh8SZ3CrhwyM7yDI8YUgw',
-                    invertInDark: true,
+                  _socialButton(
+                    'https://lh3.googleusercontent.com/aida-public/AB6AXuBo6u8XulMTMJes2HUa6dDwjAFhosqeYMGYK21pxLnEzNMr8qNxftfF-052R9IWPVLzCq8LH9MLZGCIY-uM0d2aZQHpwm3CFyRKhYiORvRfRdwITf2vVlG7C92ON9YiOwZGTLHIvszC3g9uJtGzE3gbBmPs8pgkO6dFzh8X45OYT5v-sAbteonQxzfSFtGxqpYKo8X4Q3F_CF-5J33qaTPnUU4WDMaWJkTO4v1Ji13RgVtmHtUPOzrCxYh8SZ3CrhwyM7yDI8YUgw',
+                    isDark
                   ),
                 ],
               ),
@@ -252,22 +325,24 @@ class _AuthScreenState extends State<AuthScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Belum punya akun? ',
+                    _isLogin ? 'Belum punya akun? ' : 'Sudah punya akun? ',
                     style: TextStyle(
                       color: isDark ? Colors.grey[400] : Colors.grey[500],
+                      fontSize: 16,
                     ),
                   ),
                   GestureDetector(
                     onTap: () {
                       setState(() {
-                        isLogin = !isLogin;
+                        _isLogin = !_isLogin;
                       });
                     },
                     child: Text(
-                      'Daftar',
+                      _isLogin ? 'Daftar' : 'Masuk',
                       style: TextStyle(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
+                        fontSize: 16,
                         decoration: TextDecoration.underline,
                       ),
                     ),
@@ -280,25 +355,16 @@ class _AuthScreenState extends State<AuthScreen> {
       ),
     );
   }
-}
 
-class _SocialButton extends StatelessWidget {
-  final String imageUrl;
-  final bool invertInDark;
-
-  const _SocialButton({required this.imageUrl, this.invertInDark = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _socialButton(String iconUrl, bool isDark) {
     return Container(
       width: 56,
       height: 56,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
+        border: Border.all(color: isDark ? Colors.grey[600]! : Colors.grey[300]!),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -307,10 +373,7 @@ class _SocialButton extends StatelessWidget {
           ),
         ],
       ),
-      child: Image.network(
-        imageUrl,
-        color: (isDark && invertInDark) ? Colors.white : null,
-      ),
+      child: Image.network(iconUrl),
     );
   }
 }
